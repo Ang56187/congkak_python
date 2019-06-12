@@ -2,132 +2,175 @@ import numpy as np
 
 class Congkak_algorithm:
 
-    def __init__(self,player_score,oppo_score):
+    def __init__(self,player_score,oppo_score,current_player,num_hole,num_shell):
         self.player_score = player_score
         self.oppo_score = oppo_score
+        self.current_player = current_player
+        self.num_hole = num_hole
+        self.num_shell = num_shell
         self.algorithm()
 
     def algorithm(self):
-        self.board = np.zeros((2,7),dtype=int)
-        self.board[:,0:7] = 13
+        self.board = np.zeros((2,self.num_hole),dtype=int)
+        self.board[:,0:self.num_hole] = self.num_shell
+        self.board[0,3] = 0
         ## 0 is player, 1 is opponent
-        self.current_player = 0
+        no_zero = []
 
     def print_board(self):
+        #prints the board
         print(self.board)
 
     def check_empty(self):
         ##check if game have ended or not
         ##if one side of hole were emptied out
-
-        for j in range(len(self.board[0])):
-            if self.board[0][j] > 0:
-                print("Not empty on player side")
-                return True
-            elif self.board[1][j] > 0:
-                print("Not empty on apponent side")
-                return True
-        return False
+        if all(element == 0 for element in self.board[0][0:7]):
+            print("Game ended on player side")
+            return False
+        elif all(element == 0 for element in self.board[1][0:7]):
+            print("Game ended on opponent side")
+            return False
+        else:
+            return True
 
     def spill_seed(self,row,col):
         ##add seeds for each hole
-        self.board[row][col-1]+=1
+        self.board[row][col]+=1
 
-    def move(self,i,j):
-        if self.board[0,7] + self.board[1,7] == 98:
-            return True
-        return False
+    def has_available_move(self,row):
+        ## show player available moves they can make
+        non_zero= []
+        counter =0
+        for col in self.board[row,:]:
+            if col != 0 :
+                non_zero.append(counter)
+            counter+=1
+        return  non_zero
 
-    def has_available_move(self,i):
-        if np.any(self.board[i,0:5]!=0):
-            return True
-        return False
 
-    def play_move(self,inputMove):
-        ## create copy so before shells in hole got emptied
-        no_times_loop = self.board[0,inputMove]
-
-        ## empty out the selected hole
-        self.board[0,inputMove]=0
-
-        ##set row where player starts
-        row = 0
+    def play_move(self,inputMove,row,num_of_loops):
+        ##dictates how the hole allocation works
 
         ## start with players first
         ## iterate no of times based on shells on selected hole
-        for moves in range(no_times_loop,0,-1):
+        for moves in range(num_of_loops,0,-1):
             print ("")
             print("Moves left:",moves)
             print("column:",row)
 
-            if inputMove<=0:
+            #move to next row once
+            if inputMove <=-1:
+                inputMove = 0
                 row =1
-                inputMove = 1
 
-            if inputMove >=8:
+            if inputMove >= self.num_hole:
+                inputMove=self.num_hole-1
                 row =0
-                inputMove=7
 
             if row == 0:
                 self.spill_seed(row,inputMove)
-                self.print_board()
-                print("Hole read",inputMove)
+                print("Hole filled",inputMove)
                 inputMove -= 1
 
             elif row == 1:
                 self.spill_seed(row,inputMove)
-                self.print_board()
                 print("Hole filled",inputMove)
-                inputMove+=1
+                print(self.board)
+                inputMove += 1
 
             ## get all shells in hole after the empty hole
             if moves == 1 and row==0 and self.current_player ==0:
-                self.player_score +=self.board[row,inputMove-2]
-                ##grabbed all the shells, leaving it empty
-                self.board[row,inputMove-2] = 0
-                ##now its opponent turn
-                current_player=1
-                print("Player score:",self.player_score)
+                #make sure it doesnt grab -1 hole shells, to prevent index error
+                if inputMove>1  and self.board[row,inputMove-1] == 0:
+                    self.player_score +=self.board[row,inputMove-2]
+                    ##grabbed all the shells, leaving it empty
+                    self.board[row,inputMove-2] = 0
+                    ##now its opponent turn
+                    current_player=1
+                    print("Player score:",self.player_score)
 
             elif moves==1 and row ==1 and self.current_player ==0:
-                self.player_score +=self.board[row,inputMove+2]
-                ##grabbed all the shells, leaving it emty
-                self.board[row,inputMove-2] = 0
-                ##now its opponent turn
-                current_player=1
-                print("Player score:",self.player_score)
+                #make sure it doesnt grab 7 hole shells, to prevent index error
+                if inputMove<self.num_hole and self.board[row,inputMove+1] == 0:
+                    self.player_score +=self.board[row,inputMove+2]
+                    ##grabbed all the shells, leaving it emty
+                    self.board[row,inputMove+2] = 0
+                    ##now its opponent turn
+                    current_player=1
+                    print("Player score:",self.player_score)
 
             ## get all shells in hole after the empty hole
             if moves == 1 and row==0 and self.current_player ==1:
-                self.oppo_score +=self.board[row,inputMove-2]
-                ##grabbed all the shells, leaving it empty
-                self.board[row,inputMove-2] = 0
-                ##now its player turn
-                current_player=0
-                print("Opponent score:",self.oppo_score)
+                if inputMove>1  and self.board[row,inputMove-1] == 0:
+                    self.oppo_score +=self.board[row,inputMove-2]
+                    ##grabbed all the shells, leaving it empty
+                    self.board[row,inputMove-2] = 0
+                    ##now its player turn
+                    print("Opponent score:",self.oppo_score)
 
             elif moves==1 and row ==1 and self.current_player == 1:
-                self.oppo_score +=self.board[row,inputMove+2]
-                ##grabbed all the shells, leaving it empty
-                self.board[row,inputMove-2] = 0
-                ##now its player turn
-                current_player=0
-                print("Player score:",self.oppo_score)
+                if inputMove<self.num_hole and self.board[row,inputMove+1] == 0:
+                    self.oppo_score +=self.board[row,inputMove+2]
+                    ##grabbed all the shells, leaving it empty
+                    self.board[row,inputMove+2] = 0
+                    ##now its player turn
+                    print("Player score:",self.oppo_score)
 
 
     #where the game starts playing
     def player_play_game(self):
-        while self.check_empty():
+            # player always start at row 0
+            row = 0
+            print("Available moves:",self.has_available_move(row))
             self.print_board()
             ## allow player to choose where to place shells
-            inputMove = int(input("Enter 0-6:"))
-            while not 0<=inputMove<7:
-                    inputMove = int(input("Please enter 0-6:"))
+            inputMsg = 'Player 1 enter '+str(self.has_available_move(row))+':'
+            inputMove = int(input(inputMsg))
+            while not 0<=inputMove<self.num_hole:
+                    inputMove = int(input(inputMsg))
 
-            while self.board[0][inputMove] == 0:
-                inputMove = int(input("Please select valid and non-zero hole:"))
-            print("Input in")
-            self.play_move(inputMove)
+##gotta fix this error where it allows values more than list to be entered
+            while self.board[row][inputMove] ==0:
+                if 0<=inputMove<self.num_hole:
+                    inputMsg = 'Player 1,please select valid and non-zero hole '+str(self.has_available_move(row))+':'
+                    inputMove = int(input(inputMsg))
+
+            ## create copy so before shells in hole got emptied
+            no_times_loop = self.board[row,inputMove]
+            ## empty out the selected hole
+            self.board[row,inputMove]=0
+            self.play_move(inputMove-1,row,no_times_loop)
+            self.current_player = 1
+
+        #where the game starts playing
+    def opponent_play_game(self):
+            #opponent always start at row 1
+            row=1
+            print("Available moves:",self.has_available_move(row))
+            self.print_board()
+            ## allow player to choose where to place shells
+            inputMsg = 'Player 2 enter '+str(self.has_available_move(row))+':'
+            inputMove = int(input(inputMsg))
+            while not 0<= inputMove <self.num_hole:
+                inputMove = int(input(inputMsg))
+
+            while not 0<=inputMove< self.num_hole and self.board[row][inputMove] == 0:
+                inputMsg = 'Player 2,please select valid and non-zero hole '+str(self.has_available_move(row))+':'
+                inputMove = int(input(inputMsg))
+
+            ## create copy so before shells in hole got emptied
+            no_times_loop = self.board[row,inputMove]
+            ## empty out the selected hole
+            self.board[row,inputMove]=0
+            self.play_move(inputMove+1,row,no_times_loop)
+            self.current_player = 0
+
+    def main_game(self):
+        while self.check_empty():
+            if self.current_player == 0:
+                self.player_play_game()
+            elif self.current_player == 1:
+                self.opponent_play_game()
 
 
 
