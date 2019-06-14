@@ -1,7 +1,7 @@
 from Congkak_algorithm import Congkak_algorithm
 
 def main():
-    congkak = Congkak_algorithm(0,0,0,7,7)
+    congkak = Congkak_algorithm(0,0,"Noobmaster","Thor",0,3,3)
     congkak.main_game()
 
 if __name__ == '__main__':
