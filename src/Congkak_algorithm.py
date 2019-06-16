@@ -21,12 +21,13 @@ class Congkak_algorithm:
     def algorithm(self):
         self.board = np.zeros((2,self.num_hole),dtype=int)
         self.board[:,0:self.num_hole] = self.num_shell
-        #self.board[1,0] = 0
-        self.board[0,4] = 0
-        self.board[0,2] = 7
+        self.board[1,0] = 0
+        #self.board[0,4] = 0
+        #self.board[0,2] = 7
         no_zero = []
 
-
+    def set_board(self,board):
+        self.board = board
 
     def get_board(self):
         return self.board
@@ -92,24 +93,16 @@ class Congkak_algorithm:
 
         if row == 0:
             self.spill_seed(row,inputMove)
-            print("Hole filled",inputMove)
-
             ## prevent adding inputMove even if no moves made
             if not moves == 1:
-                print("Moves:",moves)
                 inputMove -= 1
 
         elif row == 1:
             self.spill_seed(row,inputMove)
-            print("Hole filled",inputMove)
-            print(self.board)
-
             ## prevent adding inputMove even if no moves made
             if not moves == 1:
-                print("Moves:",moves)
                 inputMove += 1
 
-        print(inputMove)
 
 
     # grab_seeds_next_row used to grab holes in the opposite row
@@ -144,37 +137,28 @@ class Congkak_algorithm:
         ## iterate no of times based on shells on selected hole
         for moves in range(num_of_loops,0,-1):
 
-            ##self.hole_moves(inputMove,moves,row)
             print ("")
             #move to row below
-            if inputMove <=-1:
+            if inputMove <=-1 and row== 0:
                 inputMove = 0
                 row =1
 
             #move to row above
-            if inputMove >= self.num_hole:
+            if inputMove >= self.num_hole and row == 1:
                 inputMove=self.num_hole-1
                 row =0
 
             if row == 0:
                 self.spill_seed(row,inputMove)
-                print("Hole filled",inputMove)
-
                 ## prevent adding inputMove even if no moves made
                 if not moves <= 1:
-                    print("Moves:",moves)
                     inputMove -= 1
 
             elif row == 1:
                 self.spill_seed(row,inputMove)
-                print("Hole filled",inputMove)
-                print(self.board)
-
                 ## prevent adding inputMove even if no moves made
                 if not moves <= 1:
-                    print("Moves:",moves)
                     inputMove += 1
-
 
             ## part where it dictates how or when shells in holes are grabbed
             ## check if its at its last move and if its on first row
@@ -224,6 +208,7 @@ class Congkak_algorithm:
                     print("E")
                     self.grab_seeds_next_row(self.current_player,-row,inputMove-1)
 
+            print(self.board)
             if self.current_player == 0:
                 print("Player score:",self.player_score)
             elif self.current_player == 1:
@@ -307,15 +292,34 @@ class Congkak_algorithm:
 
 
 
-    def main_game(self):
-        while self.check_empty():
-            if self.current_player == 0:
-                self.player_play_game()
-            elif self.current_player == 1:
-                self.opponent_play_game()
+    # where ai play game, no input needed
+    def ai_play_game(self,inputMove):
 
-        print('Player score:',self.player_score)
-        print('Opponent score:',self.oppo_score)
+        row = 1
+        #inputMove(str) converted to (int)
+        convertedMove = int(inputMove)
+
+
+        ## create copy so before shells in hole got emptied
+        no_times_loop = self.board[row,convertedMove]
+
+        ## empty out the selected hole
+        self.board[row,convertedMove]=0
+
+        self.play_move(convertedMove+1,row,no_times_loop)
+
+        self.current_player = 0
+
+
+    def main_game(self):
+            while self.check_empty():
+                if self.current_player == 0:
+                    self.player_play_game()
+                elif self.current_player == 1:
+                    self.opponent_play_game()
+
+            print('Player score:',self.player_score)
+            print('Opponent score:',self.oppo_score)
 
 
 
