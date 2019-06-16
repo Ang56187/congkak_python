@@ -21,9 +21,21 @@ class Congkak_algorithm:
     def algorithm(self):
         self.board = np.zeros((2,self.num_hole),dtype=int)
         self.board[:,0:self.num_hole] = self.num_shell
-        self.board[1,2] = 0
-        self.board[0,0] =0
+        #self.board[1,0] = 0
+        self.board[0,4] = 0
+        self.board[0,2] = 7
         no_zero = []
+
+
+
+    def get_board(self):
+        return self.board
+
+    def get_player_score(self):
+        return self.player_score
+
+    def get_oppo_score(self):
+        return self.oppo_score
 
 
 
@@ -47,14 +59,14 @@ class Congkak_algorithm:
 
 
 
+    ##add seeds for each hole
     def spill_seed(self,row,col):
-        ##add seeds for each hole
         self.board[row][col]+=1
 
 
 
+    ## show player available moves they can make
     def has_available_move(self,row):
-        ## show player available moves they can make
         non_zero= []
         counter =0
         for col in self.board[row,:]:
@@ -100,27 +112,33 @@ class Congkak_algorithm:
         print(inputMove)
 
 
+    # grab_seeds_next_row used to grab holes in the opposite row
+    def grab_seeds_same_row(self,player,row,inputMove):
 
-    def grab_seeds_same_row(self,row,inputMove):
-        self.player_score += self.board[row,inputMove]
-        ##grabbed all the seeds, leaving it empty
+        if player == 0:
+            self.player_score += self.board[row,inputMove]
+        elif player == 1:
+            self.oppo_score += self.board[row,inputMove]
+        ##grab all the seeds, leaving it empty
         self.board[row,inputMove] = 0
-        ##now its opponent turn
-        print("Player score:",self.player_score)
+
+    # grab_seeds_next_row used to grab holes in the opposite row
+
+
 
     # absolute of row required to remove negative,
     # as row in second row will be applied negatively
-    def grab_seeds_next_row(self,row,inputMove):
-        self.player_score += self.board[abs(1+row),inputMove]
+    def grab_seeds_next_row(self,player,row,inputMove):
+        if player == 0:
+            self.player_score += self.board[abs(1+row),inputMove]
+        elif player == 1:
+            self.oppo_score += self.board[abs(1+row),inputMove]
         ##grabbed all the seeds, leaving it empty
         self.board[abs(row)-1,inputMove] = 0
-        ##now its opponent turn
-        current_player=1
-        print("Player score:",self.player_score)
 
 
+    ##dictates how the seeds allocation works
     def play_move(self,inputMove,row,num_of_loops):
-        ##dictates how the hole allocation works
 
         ## start with players first
         ## iterate no of times based on shells on selected hole
@@ -157,68 +175,59 @@ class Congkak_algorithm:
                     print("Moves:",moves)
                     inputMove += 1
 
-            print("Moves:",moves)
-            print("Input:",inputMove)
 
-            ## get all seeds in hole after the empty hole
-            if moves == 1 and row==0 and self.current_player ==0:
-                #make sure it doesnt grab -1 hole shells, to prevent index error
+            ## part where it dictates how or when shells in holes are grabbed
+            ## check if its at its last move and if its on first row
+            if moves == 1 and row==0:
+                #grabs shells if end before empty shells
+                # 1011
+                # 1111
                 if inputMove>1  and self.board[row,inputMove-1] == 0:
-                    ##self.player_score +=self.board[row,inputMove-2]
-                    ##grabbed all the shells, leaving it empty
-                    ##self.board[row,inputMove-2] = 0
-                    ##now its opponent turn
-                    ##current_player=1
-                    ##print("Player score:",self.player_score)
-                    self.grab_seeds_same_row(row,inputMove-2)
+                    self.grab_seeds_same_row(self.current_player,row,inputMove-2)
 
+                #grabs shells in next row if zero at end, such as
+                # 0111
+                # 1111
                 if inputMove == 1 and self.board[row,inputMove-1] == 0:
-                    ##go to next line
-                    inputMove = 0
-                    #self.player_score += self.board[row+1,inputMove]
-                    ###grabbed all the seeds, leaving it empty
-                    #self.board[row-1,inputMove] = 0
-                    ###now its opponent turn
-                    #current_player=1
-                    #print("Player score:",self.player_score)
-                    self.grab_seeds_next_row(row,inputMove)
+                    self.grab_seeds_next_row(self.current_player,row,inputMove-1)
 
-            elif moves==1 and row ==1 and self.current_player ==0:
-                #make sure it doesnt grab 7 hole seeds, to prevent index error
-                if inputMove<self.num_hole-1 and self.board[row,inputMove] == 0:
-                    print("YES")
+                #grabs shells in next row if zero at next row, such as
+                # 1111
+                # 0111
+                if inputMove == 0 and self.board[row+1,inputMove] == 0:
+                    self.grab_seeds_next_row(self.current_player,row,inputMove+1)
 
-                    ##self.player_score +=self.board[row,inputMove+1]
-                    ##grabbed all the shells, leaving it emty
-                    ##self.board[row,inputMove+1] = 0
-                    ##now its opponent turn
-                    ##current_player=1
-                    ##print("Player score:",self.player_score)
-                    self.grab_seeds_same_row(row,inputMove+1)
+            #check if its on its last move and if its on the second row
+            elif moves==1 and row ==1:
+                #grabs shells if end before empty shells,such as
+                # 1111
+                # 1011
+                if inputMove<self.num_hole-2 and self.board[row,inputMove+1] == 0:
+                    print("input:",inputMove)
+                    print("A")
+                    self.grab_seeds_same_row(self.current_player,row,inputMove+2)
 
+                #grabs shells in next row if zero at end, such as
+                # 1111
+                # 1110
                 if inputMove == self.num_hole-2 and self.board[row,inputMove+1] == 0:
                     inputMove=self.num_hole-1
-                    self.grab_seeds_next_row(-row,inputMove)
+                    print("input:",inputMove)
+                    print("T")
+                    self.grab_seeds_next_row(self.current_player,-row,inputMove)
 
-            ## get all seeds in hole after the empty hole
-            if moves == 1 and row==0 and self.current_player ==1:
-                if inputMove>1  and self.board[row,inputMove] == 0:
-                    self.oppo_score +=self.board[row,inputMove-1]
-                    ##grabbed all the shells, leaving it empty
-                    self.board[row,inputMove-1] = 0
-                    ##now its player turn
-                    print("Opponent score:",self.oppo_score)
+                #grabs shells in next row if zero at next row, such as
+                # 1110
+                # 1111
+                if inputMove == self.num_hole-1 and self.board[row-1,inputMove] == 0 and not self.board[row][inputMove] == 0:
+                    print("input:",inputMove)
+                    print("E")
+                    self.grab_seeds_next_row(self.current_player,-row,inputMove-1)
 
-            elif moves==1 and row ==1 and self.current_player == 1:
-                if inputMove<self.num_hole-2 and self.board[row,inputMove] == 0:
-                    self.oppo_score +=self.board[row,inputMove+1]
-                    ##grabbed all the seeds, leaving it empty
-                    self.board[row,inputMove+1] = 0
-                    ##now its player turn
-                    print("Opponent score:",self.oppo_score)
-
-    def get_shell(self):
-        print('gg')
+            if self.current_player == 0:
+                print("Player score:",self.player_score)
+            elif self.current_player == 1:
+                print("Opponent score:",self.oppo_score)
 
 
 
