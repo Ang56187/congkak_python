@@ -22,13 +22,11 @@ class Congkak_algorithm:
         self.board = np.zeros((2,self.num_hole),dtype=int)
         self.board[:,0:self.num_hole] = self.num_seed
         self.current_player = 0
-        self.board[0,3] = 0
-        self.board[0,0] = 0
-        self.board[0,1] = 1
         self.inputMsg = ""
-        #self.board[0,2] = 7
+        self.board[0,0] =2
         no_zero = []
 
+    #getters
     def set_board(self,board):
         self.board = board
 
@@ -41,28 +39,46 @@ class Congkak_algorithm:
     def get_oppo_score(self):
         return self.oppo_score
 
+    def get_player_name(self):
+            return self.player_name
+
+    def get_oppo_name(self):
+        return self.oppo_name
+
     def get_inputMsg(self):
         return self.inputMsg
 
 
 
+    #prints the board
     def print_board(self):
-        #prints the board
         print(self.board)
 
 
 
+    ##check if game have ended or not
+    ##if one side of hole were emptied out
     def check_empty(self):
-        ##check if game have ended or not
-        ##if one side of hole were emptied out
+
         if all(element == 0 for element in self.board[0][0:self.num_hole]):
-            print("Game ended on player side")
+            print("Game ended on player side.")
             return False
         elif all(element == 0 for element in self.board[1][0:self.num_hole]):
-            print("Game ended on opponent side")
+            print("Game ended on opponent side.")
             return False
         else:
             return True
+
+
+
+    #check which palyer got the most score
+    def check_winner(self):
+        if self.player_score > self.oppo_score:
+            print("(Player 1)",self.player_name," have won!")
+        elif self.player_score < self.oppo_score:
+            print("(Player 2)",self.oppo_name,"have won!")
+        else:
+            print("Its a tie!")
 
 
 
@@ -81,33 +97,6 @@ class Congkak_algorithm:
                 non_zero.append(counter)
             counter+=1
         return  non_zero
-
-
-
-    ## function to allow how shells were allocated
-    def hole_moves(self,inputMove,moves,row):
-        print ("")
-        #move to row below
-        if inputMove <=-1:
-            inputMove = 0
-            row =1
-
-        #move to row above
-        if inputMove >= self.num_hole:
-            inputMove=self.num_hole-1
-            row =0
-
-        if row == 0:
-            self.spill_seed(row,inputMove)
-            ## prevent adding inputMove even if no moves made
-            if not moves == 1:
-                inputMove -= 1
-
-        elif row == 1:
-            self.spill_seed(row,inputMove)
-            ## prevent adding inputMove even if no moves made
-            if not moves == 1:
-                inputMove += 1
 
 
 
@@ -142,7 +131,6 @@ class Congkak_algorithm:
         ## start with players first
         ## iterate no of times based on shells on selected hole
         for moves in range(num_of_loops,0,-1):
-
             #move to row below
             if inputMove <=-1 and row== 0:
                 inputMove = 0
@@ -192,8 +180,6 @@ class Congkak_algorithm:
                 # 1111
                 # 1011
                 if inputMove<self.num_hole-2 and self.board[row,inputMove+1] == 0:
-                    print("input:",inputMove)
-                    print("A")
                     self.grab_seeds_same_row(self.current_player,row,inputMove+2)
 
                 #grabs shells in next row if zero at end, such as
@@ -209,7 +195,7 @@ class Congkak_algorithm:
                 if inputMove == self.num_hole-1 and self.board[row-1,inputMove] == 0 and not self.board[row][inputMove] == 0:
                     self.grab_seeds_next_row(self.current_player,-row,inputMove-1)
 
-            print("Move:",num_of_loops-moves)
+            print("Move:",num_of_loops-moves+1)
             self.print_board()
             print("")
 
@@ -292,6 +278,7 @@ class Congkak_algorithm:
             #if parameter move is assigned with value
             else:
                 convertedMove = move
+                print("move selected:",move)
 
             ## create copy so before shells in hole got emptied
             no_times_loop = self.board[row,convertedMove]
@@ -301,6 +288,31 @@ class Congkak_algorithm:
             self.play_move(convertedMove+1,row,no_times_loop)
             self.current_player = 0
 
+
+    # ## function to allow how shells were allocated
+    # def hole_moves(self,inputMove,moves,row):
+    #     print ("")
+    #     #move to row below
+    #     if inputMove <=-1:
+    #         inputMove = 0
+    #         row =1
+    #
+    #     #move to row above
+    #     if inputMove >= self.num_hole:
+    #         inputMove=self.num_hole-1
+    #         row =0
+    #
+    #     if row == 0:
+    #         self.spill_seed(row,inputMove)
+    #         ## prevent adding inputMove even if no moves made
+    #         if not moves == 1:
+    #             inputMove -= 1
+    #
+    #     elif row == 1:
+    #         self.spill_seed(row,inputMove)
+    #         ## prevent adding inputMove even if no moves made
+    #         if not moves == 1:
+    #             inputMove += 1
 
 
 

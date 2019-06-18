@@ -49,7 +49,6 @@ class Ai_player:
 
             ##number of moves list based on seeds collected
             move_list = []
-            print("Hole shells:",ai_congkak.get_board()[1,2])
 
             ## element value in index added by 1 to account for first hole where seeds were grabbed
             for no_move in range(ai_congkak.get_board()[1][move]+1):
@@ -103,7 +102,7 @@ class Ai_player:
             #remove 0 and number at end of list
             move_list.pop()
             move_list.pop()
-            # check if seeds will be allocated to next row, priority of 2 or 5
+            # check if seeds will be allocated to next row, priority of 2 or 5 or 6
             p = check_next_row(merge_board,move_list,move)
 
             if p  != -1:
@@ -123,6 +122,9 @@ class Ai_player:
                 best_priority = priority_list[i]
                 best_move = priority_move_list[i]
         print("best",best_move,"priority",best_priority)
+        print("priority list",priority_list)
+        print(" move priority list",priority_move_list)
+
         return best_move
 
 # def main():

@@ -18,6 +18,8 @@ def boyer(board,pattern,avail_move,priority_score):
     # set move
     shift_move = avail_move
 
+
+
     if shift_move:
         #resets pattern index
         i = num_pattern -1 # pattern index
@@ -84,16 +86,24 @@ def check_next_row(board,pattern,avail_move):
         # print("half board",num_board/2)
 
         #check if seeds allocated to player side
-        if num_pattern+avail_move > num_board/2 and num_pattern < num_board:
+        if num_pattern+avail_move > num_board/2 and num_pattern+avail_move < num_board:
+            print("YES")
+            print("Move used ;",avail_move,"Move ",num_pattern+avail_move)
             return 5
 
-        #check if seeds allocated to player side and then back to opponent side
-        if num_pattern+avail_move > num_board:
-            return 2
+        # check if seeds allocated to player side
+        if num_pattern+avail_move > num_board/2:
+            print("YES")
+            print("Move used:",avail_move,"Move ",num_pattern+avail_move)
+            return 6
+
+        # fill any possible 0 seeds hole
+        if board[num_pattern+avail_move] == 0:
+            return 7
 
         # if board not big enough to fit in pattern list, break the loop
         if num_pattern*2 >= num_board:
-            return -1
+            return 7
 
         #if can continue
         else:
@@ -105,10 +115,8 @@ def check_next_row(board,pattern,avail_move):
             else:
                 shift_move+=num_pattern
 
-    #if no matches found, return -1
-    return -1
-
-
+    #if large index found, return 6
+    return 1
 
 
 # if __name__ == '__main__':
