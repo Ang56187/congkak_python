@@ -3,7 +3,7 @@ import re
 
 class Congkak_algorithm:
 
-    def __init__(self,player_score,oppo_score,player_name,oppo_name,current_player,num_hole,num_shell):
+    def __init__(self,player_score,oppo_score,player_name,oppo_name,oppo_player,num_hole,num_seed):
         self.player_score = player_score
         self.oppo_score = oppo_score
 
@@ -11,18 +11,21 @@ class Congkak_algorithm:
         self.oppo_name = oppo_name
 
         #decides which player start first
-        self.current_player = current_player
+        self.oppo_player = oppo_player
 
         self.num_hole = num_hole
-        self.num_shell = num_shell
+        self.num_seed = num_seed
         self.algorithm()
 
     ##initialize variables not set by player
     def algorithm(self):
         self.board = np.zeros((2,self.num_hole),dtype=int)
-        self.board[:,0:self.num_hole] = self.num_shell
-        self.board[1,0] = 0
-        #self.board[0,4] = 0
+        self.board[:,0:self.num_hole] = self.num_seed
+        self.current_player = 0
+        self.board[0,3] = 0
+        self.board[0,0] = 0
+        self.board[0,1] = 1
+        self.inputMsg = ""
         #self.board[0,2] = 7
         no_zero = []
 
@@ -37,6 +40,9 @@ class Congkak_algorithm:
 
     def get_oppo_score(self):
         return self.oppo_score
+
+    def get_inputMsg(self):
+        return self.inputMsg
 
 
 
@@ -110,7 +116,7 @@ class Congkak_algorithm:
 
         if player == 0:
             self.player_score += self.board[row,inputMove]
-        elif player == 1:
+        elif player >= 1:
             self.oppo_score += self.board[row,inputMove]
         ##grab all the seeds, leaving it empty
         self.board[row,inputMove] = 0
@@ -124,7 +130,7 @@ class Congkak_algorithm:
     def grab_seeds_next_row(self,player,row,inputMove):
         if player == 0:
             self.player_score += self.board[abs(1+row),inputMove]
-        elif player == 1:
+        elif player >= 1:
             self.oppo_score += self.board[abs(1+row),inputMove]
         ##grabbed all the seeds, leaving it empty
         self.board[abs(row)-1,inputMove] = 0
@@ -137,7 +143,6 @@ class Congkak_algorithm:
         ## iterate no of times based on shells on selected hole
         for moves in range(num_of_loops,0,-1):
 
-            print ("")
             #move to row below
             if inputMove <=-1 and row== 0:
                 inputMove = 0
@@ -196,42 +201,38 @@ class Congkak_algorithm:
                 # 1110
                 if inputMove == self.num_hole-2 and self.board[row,inputMove+1] == 0:
                     inputMove=self.num_hole-1
-                    print("input:",inputMove)
-                    print("T")
                     self.grab_seeds_next_row(self.current_player,-row,inputMove)
 
                 #grabs shells in next row if zero at next row, such as
                 # 1110
                 # 1111
                 if inputMove == self.num_hole-1 and self.board[row-1,inputMove] == 0 and not self.board[row][inputMove] == 0:
-                    print("input:",inputMove)
-                    print("E")
                     self.grab_seeds_next_row(self.current_player,-row,inputMove-1)
 
-            print(self.board)
-            if self.current_player == 0:
-                print("Player score:",self.player_score)
-            elif self.current_player == 1:
-                print("Opponent score:",self.oppo_score)
+            print("Move:",num_of_loops-moves)
+            self.print_board()
+            print("")
 
 
 
     # when player start playing
     def player_play_game(self):
+
             # player always start at row 0
             row = 0
+            print("")
             print("Available moves:",self.has_available_move(row))
             self.print_board()
 
             ## allow player to choose where to place shells
-            inputMsg = self.player_name+' enter '+str(self.has_available_move(row))+':'
-            inputMove = input(inputMsg)
+            self.inputMsg = self.player_name+' enter '+str(self.has_available_move(row))+':'
+            inputMove = input(self.inputMsg)
 
             #ensure player doesnt select non-existant holes
             while not inputMove \
                     or re.search("[a-zA-Z\W]+", inputMove) \
                     or not 0<=int(inputMove)<self.num_hole:
-                inputMove = input(inputMsg)
+                inputMove = input(self.inputMsg)
 
             # ensure nholes with no shells cant be selected
             if self.board[row][int(inputMove)] == 0:
@@ -239,8 +240,8 @@ class Congkak_algorithm:
                         or re.search("[a-zA-Z\W]+", inputMove) \
                         or not 0<=int(inputMove)<self.num_hole \
                         or self.board[row][int(inputMove)] ==0 :
-                    inputMsg = self.player_name+',please select valid and non-zero hole '+str(self.has_available_move(row))+':'
-                    inputMove = input(inputMsg)
+                    self.inputMsg = self.player_name+',please select valid and non-zero hole '+str(self.has_available_move(row))+':'
+                    inputMove = input(self.inputMsg)
 
             #inputMove(str) converted to (int)
             convertedMove = int(inputMove)
@@ -251,36 +252,46 @@ class Congkak_algorithm:
             ## empty out the selected hole
             self.board[row,convertedMove]=0
             self.play_move(convertedMove-1,row,no_times_loop)
-            self.current_player = 1
+
+            self.current_player = self.oppo_player
 
 
 
     # where opponent start playing
-    def opponent_play_game(self):
+    def opponent_play_game(self,move = None):
             #opponent always start at row 1
             row=1
+            print("")
             print("Available moves:",self.has_available_move(row))
             self.print_board()
-            ## allow player to choose where to place shells
-            inputMsg = self.oppo_name+' enter '+str(self.has_available_move(row))+':'
-            inputMove = input(inputMsg)
 
-            #ensure player doesnt select non-existant holes
-            while not inputMove \
-                    or re.search("[a-zA-Z\W]+", inputMove) \
-                    or not 0<=int(inputMove)<self.num_hole:
-                        inputMove = input(inputMsg)
+            convertedMove = 0
 
-            if self.board[row][int(inputMove)] == 0:
+            if move == None :
+                ## allow player to choose where to place shells
+                self.inputMsg = self.oppo_name+' enter '+str(self.has_available_move(row))+':'
+                inputMove = input(self.inputMsg)
+
+                #ensure player doesnt select non-existent holes
                 while not inputMove \
                         or re.search("[a-zA-Z\W]+", inputMove) \
-                        or not 0<=int(inputMove)<self.num_hole \
-                        or self.board[row][int(inputMove)] == 0 :
-                            inputMsg = self.oppo_name+',please select valid and non-zero hole '+str(self.has_available_move(row))+':'
-                            inputMove = input(inputMsg)
+                        or not 0<=int(inputMove)<self.num_hole:
+                            inputMove = input(self.inputMsg)
 
-            #inputMove(str) converted to (int)
-            convertedMove = int(inputMove)
+                if self.board[row][int(inputMove)] == 0:
+                    while not inputMove \
+                            or re.search("[a-zA-Z\W]+", inputMove) \
+                            or not 0<=int(inputMove)<self.num_hole \
+                            or self.board[row][int(inputMove)] == 0 :
+                                self.inputMsg = self.oppo_name+',please select valid and non-zero hole '+str(self.has_available_move(row))+':'
+                                inputMove = input(self.inputMsg)
+
+                #inputMove(str) converted to (int)
+                convertedMove = int(inputMove)
+
+            #if parameter move is assigned with value
+            else:
+                convertedMove = move
 
             ## create copy so before shells in hole got emptied
             no_times_loop = self.board[row,convertedMove]
@@ -292,34 +303,8 @@ class Congkak_algorithm:
 
 
 
-    # where ai play game, no input needed
-    def ai_play_game(self,inputMove):
-
-        row = 1
-        #inputMove(str) converted to (int)
-        convertedMove = int(inputMove)
 
 
-        ## create copy so before shells in hole got emptied
-        no_times_loop = self.board[row,convertedMove]
-
-        ## empty out the selected hole
-        self.board[row,convertedMove]=0
-
-        self.play_move(convertedMove+1,row,no_times_loop)
-
-        self.current_player = 0
-
-
-    def main_game(self):
-            while self.check_empty():
-                if self.current_player == 0:
-                    self.player_play_game()
-                elif self.current_player == 1:
-                    self.opponent_play_game()
-
-            print('Player score:',self.player_score)
-            print('Opponent score:',self.oppo_score)
 
 
 
