@@ -1,133 +1,322 @@
 import numpy as np
+import re
 
 class Congkak_algorithm:
 
-    def __init__(self,player_score,oppo_score):
+    def __init__(self,player_score,oppo_score,player_name,oppo_name,oppo_player,num_hole,num_seed):
         self.player_score = player_score
         self.oppo_score = oppo_score
+
+        self.player_name = player_name
+        self.oppo_name = oppo_name
+
+        #decides which player start first
+        self.oppo_player = oppo_player
+
+        self.num_hole = num_hole
+        self.num_seed = num_seed
         self.algorithm()
 
+    ##initialize variables not set by player
     def algorithm(self):
-        self.board = np.zeros((2,7),dtype=int)
-        self.board[:,0:7] = 13
-        ## 0 is player, 1 is opponent
+        self.board = np.zeros((2,self.num_hole),dtype=int)
+        self.board[:,0:self.num_hole] = self.num_seed
         self.current_player = 0
+        self.inputMsg = ""
+        self.board[0,0] =2
+        no_zero = []
 
+    #getters
+    def set_board(self,board):
+        self.board = board
+
+    def get_board(self):
+        return self.board
+
+    def get_player_score(self):
+        return self.player_score
+
+    def get_oppo_score(self):
+        return self.oppo_score
+
+    def get_player_name(self):
+            return self.player_name
+
+    def get_oppo_name(self):
+        return self.oppo_name
+
+    def get_inputMsg(self):
+        return self.inputMsg
+
+
+
+    #prints the board
     def print_board(self):
         print(self.board)
 
+
+
+    ##check if game have ended or not
+    ##if one side of hole were emptied out
     def check_empty(self):
-        ##check if game have ended or not
-        ##if one side of hole were emptied out
 
-        for j in range(len(self.board[0])):
-            if self.board[0][j] > 0:
-                print("Not empty on player side")
-                return True
-            elif self.board[1][j] > 0:
-                print("Not empty on apponent side")
-                return True
-        return False
+        if all(element == 0 for element in self.board[0][0:self.num_hole]):
+            print("Game ended on player side.")
+            return False
+        elif all(element == 0 for element in self.board[1][0:self.num_hole]):
+            print("Game ended on opponent side.")
+            return False
+        else:
+            return True
 
+
+
+    #check which palyer got the most score
+    def check_winner(self):
+        if self.player_score > self.oppo_score:
+            print("(Player 1)",self.player_name," have won!")
+        elif self.player_score < self.oppo_score:
+            print("(Player 2)",self.oppo_name,"have won!")
+        else:
+            print("Its a tie!")
+
+
+
+    ##add seeds for each hole
     def spill_seed(self,row,col):
-        ##add seeds for each hole
-        self.board[row][col-1]+=1
+        self.board[row][col]+=1
 
-    def move(self,i,j):
-        if self.board[0,7] + self.board[1,7] == 98:
-            return True
-        return False
 
-    def has_available_move(self,i):
-        if np.any(self.board[i,0:5]!=0):
-            return True
-        return False
 
-    def play_move(self,inputMove):
-        ## create copy so before shells in hole got emptied
-        no_times_loop = self.board[0,inputMove]
+    ## show player available moves they can make
+    def has_available_move(self,row):
+        non_zero= []
+        counter =0
+        for col in self.board[row,:]:
+            if col != 0 :
+                non_zero.append(counter)
+            counter+=1
+        return  non_zero
 
-        ## empty out the selected hole
-        self.board[0,inputMove]=0
 
-        ##set row where player starts
-        row = 0
+
+    # grab_seeds_next_row used to grab holes in the opposite row
+    def grab_seeds_same_row(self,player,row,inputMove):
+
+        if player == 0:
+            self.player_score += self.board[row,inputMove]
+        elif player >= 1:
+            self.oppo_score += self.board[row,inputMove]
+        ##grab all the seeds, leaving it empty
+        self.board[row,inputMove] = 0
+
+    # grab_seeds_next_row used to grab holes in the opposite row
+
+
+
+    # absolute of row required to remove negative,
+    # as row in second row will be applied negatively
+    def grab_seeds_next_row(self,player,row,inputMove):
+        if player == 0:
+            self.player_score += self.board[abs(1+row),inputMove]
+        elif player >= 1:
+            self.oppo_score += self.board[abs(1+row),inputMove]
+        ##grabbed all the seeds, leaving it empty
+        self.board[abs(row)-1,inputMove] = 0
+
+
+    ##dictates how the seeds allocation works
+    def play_move(self,inputMove,row,num_of_loops):
 
         ## start with players first
         ## iterate no of times based on shells on selected hole
-        for moves in range(no_times_loop,0,-1):
-            print ("")
-            print("Moves left:",moves)
-            print("column:",row)
-
-            if inputMove<=0:
+        for moves in range(num_of_loops,0,-1):
+            #move to row below
+            if inputMove <=-1 and row== 0:
+                inputMove = 0
                 row =1
-                inputMove = 1
 
-            if inputMove >=8:
+            #move to row above
+            if inputMove >= self.num_hole and row == 1:
+                inputMove=self.num_hole-1
                 row =0
-                inputMove=7
 
             if row == 0:
                 self.spill_seed(row,inputMove)
-                self.print_board()
-                print("Hole read",inputMove)
-                inputMove -= 1
+                ## prevent adding inputMove even if no moves made
+                if not moves <= 1:
+                    inputMove -= 1
 
             elif row == 1:
                 self.spill_seed(row,inputMove)
-                self.print_board()
-                print("Hole filled",inputMove)
-                inputMove+=1
+                ## prevent adding inputMove even if no moves made
+                if not moves <= 1:
+                    inputMove += 1
 
-            ## get all shells in hole after the empty hole
-            if moves == 1 and row==0 and self.current_player ==0:
-                self.player_score +=self.board[row,inputMove-2]
-                ##grabbed all the shells, leaving it empty
-                self.board[row,inputMove-2] = 0
-                ##now its opponent turn
-                current_player=1
-                print("Player score:",self.player_score)
+            ## part where it dictates how or when shells in holes are grabbed
+            ## check if its at its last move and if its on first row
+            if moves == 1 and row==0:
+                #grabs shells if end before empty shells
+                # 1011
+                # 1111
+                if inputMove>1  and self.board[row,inputMove-1] == 0:
+                    self.grab_seeds_same_row(self.current_player,row,inputMove-2)
 
-            elif moves==1 and row ==1 and self.current_player ==0:
-                self.player_score +=self.board[row,inputMove+2]
-                ##grabbed all the shells, leaving it emty
-                self.board[row,inputMove-2] = 0
-                ##now its opponent turn
-                current_player=1
-                print("Player score:",self.player_score)
+                #grabs shells in next row if zero at end, such as
+                # 0111
+                # 1111
+                if inputMove == 1 and self.board[row,inputMove-1] == 0:
+                    self.grab_seeds_next_row(self.current_player,row,inputMove-1)
 
-            ## get all shells in hole after the empty hole
-            if moves == 1 and row==0 and self.current_player ==1:
-                self.oppo_score +=self.board[row,inputMove-2]
-                ##grabbed all the shells, leaving it empty
-                self.board[row,inputMove-2] = 0
-                ##now its player turn
-                current_player=0
-                print("Opponent score:",self.oppo_score)
+                #grabs shells in next row if zero at next row, such as
+                # 1111
+                # 0111
+                if inputMove == 0 and self.board[row+1,inputMove] == 0:
+                    self.grab_seeds_next_row(self.current_player,row,inputMove+1)
 
-            elif moves==1 and row ==1 and self.current_player == 1:
-                self.oppo_score +=self.board[row,inputMove+2]
-                ##grabbed all the shells, leaving it empty
-                self.board[row,inputMove-2] = 0
-                ##now its player turn
-                current_player=0
-                print("Player score:",self.oppo_score)
+            #check if its on its last move and if its on the second row
+            elif moves==1 and row ==1:
+                #grabs shells if end before empty shells,such as
+                # 1111
+                # 1011
+                if inputMove<self.num_hole-2 and self.board[row,inputMove+1] == 0:
+                    self.grab_seeds_same_row(self.current_player,row,inputMove+2)
 
+                #grabs shells in next row if zero at end, such as
+                # 1111
+                # 1110
+                if inputMove == self.num_hole-2 and self.board[row,inputMove+1] == 0:
+                    inputMove=self.num_hole-1
+                    self.grab_seeds_next_row(self.current_player,-row,inputMove)
 
-    #where the game starts playing
-    def player_play_game(self):
-        while self.check_empty():
+                #grabs shells in next row if zero at next row, such as
+                # 1110
+                # 1111
+                if inputMove == self.num_hole-1 and self.board[row-1,inputMove] == 0 and not self.board[row][inputMove] == 0:
+                    self.grab_seeds_next_row(self.current_player,-row,inputMove-1)
+
+            print("Move:",num_of_loops-moves+1)
             self.print_board()
-            ## allow player to choose where to place shells
-            inputMove = int(input("Enter 0-6:"))
-            while not 0<=inputMove<7:
-                    inputMove = int(input("Please enter 0-6:"))
+            print("")
 
-            while self.board[0][inputMove] == 0:
-                inputMove = int(input("Please select valid and non-zero hole:"))
-            print("Input in")
-            self.play_move(inputMove)
+
+
+    # when player start playing
+    def player_play_game(self):
+
+            # player always start at row 0
+            row = 0
+            print("")
+            print("Available moves:",self.has_available_move(row))
+            self.print_board()
+
+            ## allow player to choose where to place shells
+            self.inputMsg = self.player_name+' enter '+str(self.has_available_move(row))+':'
+            inputMove = input(self.inputMsg)
+
+            #ensure player doesnt select non-existant holes
+            while not inputMove \
+                    or re.search("[a-zA-Z\W]+", inputMove) \
+                    or not 0<=int(inputMove)<self.num_hole:
+                inputMove = input(self.inputMsg)
+
+            # ensure nholes with no shells cant be selected
+            if self.board[row][int(inputMove)] == 0:
+                while not inputMove \
+                        or re.search("[a-zA-Z\W]+", inputMove) \
+                        or not 0<=int(inputMove)<self.num_hole \
+                        or self.board[row][int(inputMove)] ==0 :
+                    self.inputMsg = self.player_name+',please select valid and non-zero hole '+str(self.has_available_move(row))+':'
+                    inputMove = input(self.inputMsg)
+
+            #inputMove(str) converted to (int)
+            convertedMove = int(inputMove)
+
+            ## create copy so before shells in hole got emptied
+            no_times_loop = self.board[row,convertedMove]
+
+            ## empty out the selected hole
+            self.board[row,convertedMove]=0
+            self.play_move(convertedMove-1,row,no_times_loop)
+
+            self.current_player = self.oppo_player
+
+
+
+    # where opponent start playing
+    def opponent_play_game(self,move = None):
+            #opponent always start at row 1
+            row=1
+            print("")
+            print("Available moves:",self.has_available_move(row))
+            self.print_board()
+
+            convertedMove = 0
+
+            if move == None :
+                ## allow player to choose where to place shells
+                self.inputMsg = self.oppo_name+' enter '+str(self.has_available_move(row))+':'
+                inputMove = input(self.inputMsg)
+
+                #ensure player doesnt select non-existent holes
+                while not inputMove \
+                        or re.search("[a-zA-Z\W]+", inputMove) \
+                        or not 0<=int(inputMove)<self.num_hole:
+                            inputMove = input(self.inputMsg)
+
+                if self.board[row][int(inputMove)] == 0:
+                    while not inputMove \
+                            or re.search("[a-zA-Z\W]+", inputMove) \
+                            or not 0<=int(inputMove)<self.num_hole \
+                            or self.board[row][int(inputMove)] == 0 :
+                                self.inputMsg = self.oppo_name+',please select valid and non-zero hole '+str(self.has_available_move(row))+':'
+                                inputMove = input(self.inputMsg)
+
+                #inputMove(str) converted to (int)
+                convertedMove = int(inputMove)
+
+            #if parameter move is assigned with value
+            else:
+                convertedMove = move
+                print("move selected:",move)
+
+            ## create copy so before shells in hole got emptied
+            no_times_loop = self.board[row,convertedMove]
+
+            ## empty out the selected hole
+            self.board[row,convertedMove]=0
+            self.play_move(convertedMove+1,row,no_times_loop)
+            self.current_player = 0
+
+
+    # ## function to allow how shells were allocated
+    # def hole_moves(self,inputMove,moves,row):
+    #     print ("")
+    #     #move to row below
+    #     if inputMove <=-1:
+    #         inputMove = 0
+    #         row =1
+    #
+    #     #move to row above
+    #     if inputMove >= self.num_hole:
+    #         inputMove=self.num_hole-1
+    #         row =0
+    #
+    #     if row == 0:
+    #         self.spill_seed(row,inputMove)
+    #         ## prevent adding inputMove even if no moves made
+    #         if not moves == 1:
+    #             inputMove -= 1
+    #
+    #     elif row == 1:
+    #         self.spill_seed(row,inputMove)
+    #         ## prevent adding inputMove even if no moves made
+    #         if not moves == 1:
+    #             inputMove += 1
+
+
+
+
 
 
 

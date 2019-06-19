@@ -1,5 +1,6 @@
 import tkinter as tk
 import numpy as np
+from Congkak_algorithm import Congkak_algorithm
 
 
 root = tk.Tk()
@@ -9,6 +10,8 @@ def allOne():
 
 class Board_GUI(tk.Frame):
 
+    counter = 0
+
     def __init__(self,parent):
         tk.Frame.__init__(self,parent)
         self.parent = parent
@@ -16,41 +19,45 @@ class Board_GUI(tk.Frame):
 
     def createBoard(self,root):
 
-        def test():
-            grid =np.zeros((2,7),dtype=int)
-            grid[:,0:7] = 12
-            frame_grid.config(text="123")
+        congkak = Congkak_algorithm(0,0,"Noobmaster","Thor",1,5,5)
 
-        ## way to show the gui
-        root.title("Congkak")
-        root.resizable(width=100,height=100)
-        labelfont = (20) # applies to every font in the game
-
-        board = np.zeros((2,7),dtype= int)
-        board[:,0:7] = 7
-        board[1,1] = 1
+        for row in range(2):
+            for col in range(len(congkak.get_board()[row,:])-1):
+                label = tk.Label(root, text = self.counter ,borderwidth=1 )
+                label.grid(row=row,column=col)
 
 
-        simple_label = tk.Label(root,text="Congkak game")
-        simple_label.config(font = labelfont)
-        closing_btn=tk.Button(root,text="Close",command=test)
+        input_msg = tk.StringVar()
+        input_msg.set("hey")
 
-        simple_label.grid(row=0,columnspan = 7)
-        closing_btn.grid(row=6,columnspan=7)
+        another_label = tk.Label(root,text = "placeholder",borderwidth =1)
 
-        ##for row in range(1,3):
-            ##for column in range(7):
-        global frame_grid
-        ##currentValue = board[row-1,column-1]
-        frame_grid = tk.Label(root,fg="black",text="HEY")
-        frame_grid.config(height=3, width=5)
-        frame_grid.config(font=labelfont)
-        ##frame_grid.grid(row=row,column=column)
-        frame_grid.grid(row=2)
+        def update():
+            self.counter+=1
+            print(self.counter)
+            list = []
+            self.list = [[5,5,5,5],[5,5,5,5]]
+            congkak.set_board(list)
 
+        def update_all():
+            root.after(100,update_all)
+
+        button_test = tk.Button(root, text = "submit",command=update)
+
+        another_label.grid(row = 3,column = 0 ,columnspan = 4)
+        button_test.grid(row =4, column =0,columnspan = 4)
+
+        root.update_idletasks()
+        root.mainloop()
+
+
+            #
+            # list = []
+            # self.list = np.zeros((2,5),dtype=int)
+            # congkak.set_board(list)
 
 def main():
     board = Board_GUI(root)
-    root.mainloop()
+    board.createBoard()
 
 main()
