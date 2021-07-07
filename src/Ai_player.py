@@ -13,6 +13,8 @@ class Ai_player:
         self.holes = holes
         self.seeds = seeds
 
+
+
     def initialize(self):
         self.ai_row = 0
 
@@ -121,9 +123,9 @@ class Ai_player:
             if priority_list[i] > best_priority:
                 best_priority = priority_list[i]
                 best_move = priority_move_list[i]
-        print("best",best_move,"priority",best_priority)
+        print("best move:",best_move,"best priority:",best_priority)
         print("priority list",priority_list)
-        print(" move priority list",priority_move_list)
+        print("move priority list",priority_move_list)
 
         return best_move
 

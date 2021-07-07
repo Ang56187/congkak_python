@@ -87,21 +87,17 @@ def check_next_row(board,pattern,avail_move):
 
         #check if seeds allocated to player side
         if num_pattern+avail_move > num_board/2 and num_pattern+avail_move < num_board:
-            print("YES")
-            print("Move used ;",avail_move,"Move ",num_pattern+avail_move)
             return 5
 
         # check if seeds allocated to player side
         if num_pattern+avail_move > num_board/2:
-            print("YES")
-            print("Move used:",avail_move,"Move ",num_pattern+avail_move)
             return 6
 
         # fill any possible 0 seeds hole
         if board[num_pattern+avail_move] == 0:
             return 7
 
-        # if board not big enough to fit in pattern list, break the loop
+        # if board not big enough to fit in pattern list
         if num_pattern*2 >= num_board:
             return 7
 
